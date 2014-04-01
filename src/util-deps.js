@@ -1,35 +1,21 @@
 /**
- * The parser for dependencies
+ * util-deps.js - The parser for dependencies
+ * ref: tests/research/parse-dependencies/test.html
  */
-;(function(util) {
 
-  var COMMENT_RE = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg
-  var REQUIRE_RE = /(?:^|[^.$])\brequire\s*\(\s*(["'])([^"'\s\)]+)\1\s*\)/g
+var REQUIRE_RE = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^\/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g
+var SLASH_RE = /\\\\/g
 
+function parseDependencies(code) {
+  var ret = []
 
-  util.parseDependencies = function(code) {
-    // Remove Comments
-    // ref: research/remove-comments-safely
-    code = code.replace(COMMENT_RE, '')
+  code.replace(SLASH_RE, "")
+      .replace(REQUIRE_RE, function(m, m1, m2) {
+        if (m2) {
+          ret.push(m2)
+        }
+      })
 
-    // Parse these `requires`:
-    //   var a = require('a');
-    //   someMethod(require('b'));
-    //   require('c');
-    //   ...
-    // Doesn't parse:
-    //   someInstance.require(...);
-    var ret = [], match
-    REQUIRE_RE.lastIndex = 0
-
-    while ((match = REQUIRE_RE.exec(code))) {
-      if (match[2]) {
-        ret.push(match[2])
-      }
-    }
-
-    return util.unique(ret)
-  }
-
-})(seajs._util)
+  return ret
+}
 
